@@ -17,7 +17,7 @@ def main_menu_keyboard():
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     welcome_text = (
-        "✨ *Welcome to SwiftPDF!* ✨\n\n"
+        "✨ *Welcome to NovaTask PDF!* ✨\n\n"
         "I convert your images into professional PDFs instantly.\n\n"
         "📸 *To start:* Simply send me a photo!"
     )
@@ -49,7 +49,7 @@ async def handle_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
         with open(pdf_path, "wb") as f:
             f.write(img2pdf.convert(image_path))
         with open(pdf_path, "rb") as f:
-            await update.message.reply_document(document=f, filename="SwiftPDF_Document.pdf")
+            await update.message.reply_document(document=f, filename="NovaTask_Document.pdf")
     except Exception as e:
         await update.message.reply_text(f"⚠️ Error processing image.")
     finally:
@@ -57,17 +57,32 @@ async def handle_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if os.path.exists(image_path): os.remove(image_path)
         if os.path.exists(pdf_path): os.remove(pdf_path)
 
-if __name__ == '__main__':
+# --- NEW ASYNC MAIN FOR PYTHON 3.14 ---
+async def main():
     if not TOKEN:
         print("ERROR: BOT_TOKEN variable is missing!")
-    else:
-        print("Worker starting... Connecting to Telegram.")
-        application = ApplicationBuilder().token(TOKEN).build()
-        
-        application.add_handler(CommandHandler("start", start))
-        application.add_handler(MessageHandler(filters.PHOTO, handle_image))
-        application.add_handler(MessageHandler(filters.Document.IMAGE | filters.Document.ALL, handle_wrong_format))
-        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_buttons))
-        
-        # drop_pending_updates=True is vital for your first run to clear those old /starts
-        application.run_polling(drop_pending_updates=True)
+        return
+
+    print("Worker starting... Connecting to Telegram.")
+    application = ApplicationBuilder().token(TOKEN).build()
+    
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(MessageHandler(filters.PHOTO, handle_image))
+    application.add_handler(MessageHandler(filters.Document.IMAGE | filters.Document.ALL, handle_wrong_format))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_buttons))
+    
+    # This starts the bot properly in the current event loop
+    async with application:
+        await application.initialize()
+        await application.start()
+        print("Bot is now polling...")
+        await application.updater.start_polling(drop_pending_updates=True)
+        # Keep the bot running until it's stopped
+        while True:
+            await asyncio.sleep(1)
+
+if __name__ == '__main__':
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass
