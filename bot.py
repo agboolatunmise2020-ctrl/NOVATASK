@@ -25,10 +25,27 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_text_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
+    
     if text == "🖼️ How to Convert":
-        await update.message.reply_text("Attach a JPG or PNG and send it as a **Photo**. Please do not send it as a 'File'!")
+        await update.message.reply_text(
+            "Attach a JPG or PNG and send it as a **Photo**. Please do not send it as a 'File'!",
+            parse_mode='Markdown'
+        )
+        
     elif text == "⚖️ Privacy Policy":
-        await update.message.reply_text("Privacy is priority. Files are deleted immediately. We store nothing.")
+        await update.message.reply_text(
+            "Privacy is priority. Files are deleted immediately after conversion. We store nothing."
+        )
+
+    # NEW: Logic for the My History button
+    elif text == "📄 My History":
+        history_text = (
+            "📋 *Your Conversion History*\n\n"
+            "For your security, NovaTask operates on a **Zero-Retention** policy. "
+            "We do not store your files or history on our servers.\n\n"
+            "Once you download your PDF, the record is cleared! 🔒"
+        )
+        await update.message.reply_text(history_text, parse_mode='Markdown')
 
 async def handle_wrong_format(update: Update, context: ContextTypes.DEFAULT_TYPE):
     correction_text = (
