@@ -1,100 +1,100 @@
 import os
 import asyncio
-import img2pdf
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
-# 1. Environment Variables
+# 1. Configuration
 TOKEN = os.environ.get("BOT_TOKEN")
+CHANNEL_LINK = "https://t.me/+AyXFqTTaNEVmNjM1"
+SUPPORT_USER = "@maxpromarketer"
 
-# Clean 3-button layout
+# 2. Keyboards
 def main_menu_keyboard():
     keyboard = [
-        [KeyboardButton("🖼️ How to Convert")],
-        [KeyboardButton("📄 My History"), KeyboardButton("⚖️ Privacy Policy")]
+        [KeyboardButton("📊 Access VIP Market Portal")],
+        [KeyboardButton("💡 Strategy Guides"), KeyboardButton("🛡️ Risk Education")],
+        [KeyboardButton("⚖️ Privacy Policy"), KeyboardButton("🆘 Support")]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    welcome_text = (
-        "✨ *Welcome to NovaTask PDF!* ✨\n\n"
-        "I convert your images into professional PDFs instantly.\n\n"
-        "📸 *To start:* Simply send me a photo!"
-    )
-    await update.message.reply_text(welcome_text, parse_mode='Markdown', reply_markup=main_menu_keyboard())
+def channel_inline_button():
+    keyboard = [[InlineKeyboardButton("🚀 Join Private Community", url=CHANNEL_LINK)]]
+    return InlineKeyboardMarkup(keyboard)
 
-async def handle_text_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# 3. Logic Handlers
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Professional, non-aggressive welcome message
+    welcome_text = (
+        "👋 *Welcome to NovaTask!*\n\n"
+        "We provide professional tools and insights for navigating today's markets. "
+        "Our goal is to assist you with disciplined strategies and community-driven data.\n\n"
+        "Explore our resources below to get started."
+    )
+    await update.message.reply_text(
+        welcome_text, 
+        parse_mode='Markdown', 
+        reply_markup=main_menu_keyboard()
+    )
+
+async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     
-    if text == "🖼️ How to Convert":
+    if text == "📊 Access VIP Market Portal":
         await update.message.reply_text(
-            "Attach a JPG or PNG and send it as a **Photo**. Please do not send it as a 'File'!",
+            "✅ *Verification Complete.*\n\nYou are invited to join our private binary insights channel. "
+            "Click below to enter:",
+            reply_markup=channel_inline_button(),
             parse_mode='Markdown'
         )
-        
+
+    elif text == "💡 Strategy Guides":
+        msg = (
+            "🔍 *Market Analysis Overview*\n\n"
+            "We utilize a blend of technical indicators and price action. Our VIP portal covers:\n"
+            "• Momentum-based execution\n"
+            "• Volume profile analysis\n"
+            "• Optimal entry/exit timing"
+        )
+        await update.message.reply_text(msg, parse_mode='Markdown')
+
+    elif text == "🛡️ Risk Education":
+        msg = (
+            "🛡️ *Capital Preservation*\n\n"
+            "Success in any market requires strict discipline:\n"
+            "1. Define your risk before every trade.\n"
+            "2. Maintain a balanced portfolio.\n"
+            "3. Use data, not emotions, to drive decisions."
+        )
+        await update.message.reply_text(msg, parse_mode='Markdown')
+
     elif text == "⚖️ Privacy Policy":
         await update.message.reply_text(
-            "Privacy is priority. Files are deleted immediately after conversion. We store nothing."
+            "NovaTask values your privacy. We do not store personal trading data or user history."
         )
 
-    # NEW: Logic for the My History button
-    elif text == "📄 My History":
-        history_text = (
-            "📋 *Your Conversion History*\n\n"
-            "For your security, NovaTask operates on a **Zero-Retention** policy. "
-            "We do not store your files or history on our servers.\n\n"
-            "Once you download your PDF, the record is cleared! 🔒"
+    elif text == "🆘 Support":
+        await update.message.reply_text(
+            f"Questions regarding VIP access or portal tools?\n\n"
+            f"Contact Support: {SUPPORT_USER}"
         )
-        await update.message.reply_text(history_text, parse_mode='Markdown')
 
-async def handle_wrong_format(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    correction_text = (
-        "⚠️ *Wait! That's the wrong format.*\n\n"
-        "You sent this as a **File/Document**. Please send it as a **Photo** (compressed)."
-    )
-    await update.message.reply_text(correction_text, parse_mode='Markdown')
-
-async def handle_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    processing_msg = await update.message.reply_text("📥 *Processing your PDF...*", parse_mode='Markdown')
-    photo_file = await update.message.photo[-1].get_file()
-    uid = update.message.chat_id
-    image_path = f"img_{uid}.jpg"
-    pdf_path = f"doc_{uid}.pdf"
-    
-    try:
-        await photo_file.download_to_drive(image_path)
-        with open(pdf_path, "wb") as f:
-            f.write(img2pdf.convert(image_path))
-        with open(pdf_path, "rb") as f:
-            await update.message.reply_document(document=f, filename="NovaTask_Document.pdf")
-    except Exception as e:
-        await update.message.reply_text(f"⚠️ Error processing image.")
-    finally:
-        await processing_msg.delete()
-        if os.path.exists(image_path): os.remove(image_path)
-        if os.path.exists(pdf_path): os.remove(pdf_path)
-
-# --- NEW ASYNC MAIN FOR PYTHON 3.14 ---
+# --- ASYNC MAIN FOR PYTHON 3.14 ---
 async def main():
     if not TOKEN:
         print("ERROR: BOT_TOKEN variable is missing!")
         return
 
-    print("Worker starting... Connecting to Telegram.")
+    print("NovaTask Portal starting...")
     application = ApplicationBuilder().token(TOKEN).build()
     
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.PHOTO, handle_image))
-    application.add_handler(MessageHandler(filters.Document.IMAGE | filters.Document.ALL, handle_wrong_format))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_buttons))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_messages))
     
-    # This starts the bot properly in the current event loop
     async with application:
         await application.initialize()
         await application.start()
         print("Bot is now polling...")
         await application.updater.start_polling(drop_pending_updates=True)
-        # Keep the bot running until it's stopped
         while True:
             await asyncio.sleep(1)
 
