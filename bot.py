@@ -1,10 +1,14 @@
 import os
-from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+import asyncio
+import nest_asyncio
+from telegram import Update, ReplyKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
+
+# Apply fix for the "no current event loop" error
+nest_asyncio.apply()
 
 # --- CONFIGURATION ---
-# Replace with your actual token or set it in Render Environment Variables
-TOKEN = os.getenv("TELEGRAM_TOKEN", "8433155630:AAHP47TfhjGYnkw5cFgqAiXgZvksNnuHs-s")
+TOKEN = os.getenv("TELEGRAM_TOKEN", "YOUR_BOT_TOKEN_HERE")
 CONTACT_LINK = "https://t.me/S_8888_ES"
 
 # --- KHMER TEXT STRINGS ---
@@ -22,29 +26,40 @@ START_REPLY = "សូមស្វាគមន៍មកកាន់ SB24 អន�
 
 # --- HANDLERS ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Main Buttons (Reply Keyboard)
     keyboard = [
         ["❤️ចុចទីនេះដើម្បីបើកអាខោនភ្លាមៗ❤️"],
         ["❤️ចុចទីនេះដើម្បីចូលរួមក្នុងឆានែល❤️"]
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     
-    # Send the welcome image and description
-    # Ensure you have a photo URL or file ID. Using a placeholder for now.
     await update.message.reply_text(text=WELCOME_TEXT)
     await update.message.reply_text(text=START_REPLY, reply_markup=reply_markup)
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Redirect all button clicks to your contact link
     text = update.message.text
     if "ចុចទីនេះ" in text:
         await update.message.reply_text(f"សូមចុចទីនេះដើម្បីបន្ត: {CONTACT_LINK}")
 
-# --- MAIN ---
-if __name__ == '__main__':
+# --- MAIN EXECUTION ---
+async def main():
     app = ApplicationBuilder().token(TOKEN).build()
     
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
     
     print("Bot is running...")
-    app.run_polling()
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
+    
+    # Keep the bot running
+    while True:
+        await asyncio.sleep(1)
+
+if __name__ == '__main__':
+    try:
+        asyncio.run(main())
+    except RuntimeError:
+        # Fallback for environments where a loop is already running
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(main())
