@@ -8,7 +8,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, Messa
 nest_asyncio.apply()
 
 # --- CONFIGURATION ---
-TOKEN = os.getenv("TELEGRAM_TOKEN", "YOUR_BOT_TOKEN_HERE")
+TOKEN = os.getenv("TELEGRAM_TOKEN", "8433155630:AAHP47TfhjGYnkw5cFgqAiXgZvksNnuHs-s")
 CONTACT_LINK = "https://t.me/S_8888_ES"
 
 # --- KHMER TEXT STRINGS ---
