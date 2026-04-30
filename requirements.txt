@@ -1,4 +1,1 @@
-python-telegram-bot==21.10
-img2pdf==0.5.1
-flask==3.0.3
-gunicorn==22.0.0
+python-telegram-bot==20.x
