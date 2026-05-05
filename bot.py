@@ -1,47 +1,60 @@
-import os
-import asyncio
-from telegram import Update, ReplyKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+import logging
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# --- CONFIGURATION ---
-TOKEN = os.getenv("TELEGRAM_TOKEN", "8433155630:AAHP47TfhjGYnkw5cFgqAiXgZvksNnuHs-s")
-CONTACT_LINK = "https://t.me/S_8888_ES"
+# Replace with your actual Bot Token from BotFather
+TOKEN = "8433155630:AAHP47TfhjGYnkw5cFgqAiXgZvksNnuHs-s"
 
-# --- KHMER TEXT STRINGS ---
-WELCOME_TEXT = (
-    "ស្វាគមន៍មកកាន់វេបសាយ SB24 🙏\n\n"
-    "🎁 ប្រូម៉ូសិនអស់ស្ទះជាមួយ SB24\n\n"
-    "👉 ប្រាក់រង្វាន់ថ្ងៃ 30%\n"
-    "👉 ប្រាក់រង្វាន់សប្តាហ៍ 50%\n"
-    "👉 ប្រាក់រង្វាន់ខែ 100%\n\n"
-    "🎁 សំណាងអាចជារបស់លោកអ្នក លីងសម្រាប់បង្កើតអាខោន:\n"
-    f"{CONTACT_LINK}"
-)
+# Enable logging
+logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 
-START_REPLY = "សូមស្វាគមន៍មកកាន់ SB24 អនឡាញកាស៊ីណូ ធំបំផុត និងគួរឱ្យទុកចិត្តបំផុត នៅក្នុងប្រទេសកម្ពុជា!!"
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Sends the first message with the first button."""
+    keyboard = [[InlineKeyboardButton("📊 Explore Market Insights", callback_id="step_1")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await update.message.reply_text(
+        "Welcome to NovaTask AI.\n\nWe are currently focusing on high-level market data and intraday strategy. Would you like to see our current focus?",
+        reply_markup=reply_markup
+    )
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [
-        ["❤️ចុចទីនេះដើម្បីបើកអាខោនភ្លាមៗ❤️"],
-        ["❤️ចុចទីនេះដើម្បីចូលរួមក្នុងឆានែល❤️"]
-    ]
-    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-    await update.message.reply_text(text=WELCOME_TEXT)
-    await update.message.reply_text(text=START_REPLY, reply_markup=reply_markup)
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handles the multi-step button progression."""
+    query = update.callback_query
+    await query.answer()
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if "ចុចទីនេះ" in update.message.text:
-        await update.message.reply_text(f"សូមចុចទីនេះដើម្បីបន្ត: {CONTACT_LINK}")
+    if query.data == "step_1":
+        # Step 2: Information about the strategy
+        keyboard = [[InlineKeyboardButton("🔎 View Strategy Details", callback_data="step_2")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(
+            text="Our focus is primarily on **XAUUSD Intraday Analysis**.\n\nWe utilize:\n• Market Structure\n• Liquidity Mapping\n• Precision Execution",
+            reply_markup=reply_markup,
+            parse_mode="Markdown"
+        )
+
+    elif query.data == "step_2":
+        # Step 3: The Disclaimer and Final Redirect Button
+        keyboard = [
+            [InlineKeyboardButton("📈 Join Apex Entries", url="https://t.me/apexentries")],
+            [InlineKeyboardButton("⬅️ Back", callback_data="step_1")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(
+            text="**Apex Entries**\n\nSharing trade ideas for educational purposes only. No guaranteed results.\n\nReady to see the live charts?",
+            reply_markup=reply_markup,
+            parse_mode="Markdown"
+        )
 
 def main():
-    # Using the standard builder to avoid Python 3.14 attribute errors
+    """Start the bot."""
     application = Application.builder().token(TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    application.add_handler(CallbackQueryHandler(button_handler))
 
-    print("Bot is starting...")
+    # Run the bot
     application.run_polling()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
